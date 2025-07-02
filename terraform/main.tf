@@ -2,10 +2,9 @@ provider "digitalocean" {
   token = var.do_token
 }
 
-# Récupération du VPC existant par son nom et sa région
+# Recherche du VPC existant par son ID
 data "digitalocean_vpc" "existing_nfs_vpc" {
-  name   = "nfs-vpc"
-  region = "fra1"
+  id = var.vpc_id
 }
 
 # Récupération de la clé SSH déjà importée
@@ -16,8 +15,8 @@ data "digitalocean_ssh_key" "default" {
 # Déploiement du serveur NFS
 resource "digitalocean_droplet" "nfs_server" {
   name       = "nfs-server"
-  region     = "fra1"
-  size       = "s-1vcpu-1gb"
+  region     = var.region
+  size       = var.droplet_size
   image      = "debian-12-x64"
   ssh_keys   = [data.digitalocean_ssh_key.default.id]
   vpc_uuid   = data.digitalocean_vpc.existing_nfs_vpc.id
@@ -51,8 +50,8 @@ resource "null_resource" "nfs_provisioner" {
 # Déploiement du client NFS
 resource "digitalocean_droplet" "nfs_client" {
   name       = "nfs-client"
-  region     = "fra1"
-  size       = "s-1vcpu-1gb"
+  region     = var.region
+  size       = var.droplet_size
   image      = "debian-12-x64"
   ssh_keys   = [data.digitalocean_ssh_key.default.id]
   vpc_uuid   = data.digitalocean_vpc.existing_nfs_vpc.id
@@ -82,18 +81,18 @@ resource "null_resource" "nfs_client_setup" {
   }
 }
 
-# Déploiement de la VM Monitoring (Grafana + Prometheus en Docker)
+# Déploiement de la VM monitoring (Prometheus + Grafana en Docker)
 resource "digitalocean_droplet" "monitoring" {
   name       = "monitoring"
-  region     = "fra1"
-  size       = "s-1vcpu-1gb"
+  region     = var.region
+  size       = var.droplet_size
   image      = "debian-12-x64"
   ssh_keys   = [data.digitalocean_ssh_key.default.id]
   vpc_uuid   = data.digitalocean_vpc.existing_nfs_vpc.id
   tags       = ["monitoring"]
 }
 
-# Installation Docker et lancement de Grafana + Prometheus
+# Installation Docker + lancement Prometheus et Grafana sur la VM monitoring
 resource "null_resource" "monitoring_setup" {
   depends_on = [digitalocean_droplet.monitoring]
 
@@ -105,31 +104,30 @@ resource "null_resource" "monitoring_setup" {
   }
 
   provisioner "remote-exec" {
-    inline = [
-      # Installation Docker
-      "apt update && apt install -y apt-transport-https ca-certificates curl software-properties-common",
-      "curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg",
-      "echo \"deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable\" > /etc/apt/sources.list.d/docker.list",
-      "apt update && apt install -y docker-ce docker-ce-cli containerd.io",
-      "systemctl enable docker",
-      "systemctl start docker",
+  inline = [
+    # Installation Docker (idem)
+    "apt update && apt install -y apt-transport-https ca-certificates curl software-properties-common",
+    "curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -",
+    "add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable\"",
+    "apt update && apt install -y docker-ce",
+    "systemctl enable docker --now",
 
-      # Création du fichier de configuration Prometheus (exemple basique)
-      "mkdir -p /opt/prometheus",
-      "cat <<EOF > /opt/prometheus/prometheus.yml\n" +
-      "global:\n" +
-      "  scrape_interval: 15s\n" +
-      "scrape_configs:\n" +
-      "  - job_name: 'nfs'\n" +
-      "    static_configs:\n" +
-      "      - targets: ['${digitalocean_droplet.nfs_server.ipv4_address}:9100']\n" +
-      "EOF",
+    "docker network create monitoring-net || true",
 
-      # Lancement Prometheus en Docker
-      "docker run -d --name prometheus -p 9090:9090 -v /opt/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus",
+    # Création de prometheus.yml ligne par ligne
+    "echo 'global:' > /root/prometheus.yml",
+    "echo '  scrape_interval: 15s' >> /root/prometheus.yml",
+    "echo '' >> /root/prometheus.yml",
+    "echo 'scrape_configs:' >> /root/prometheus.yml",
+    "echo '  - job_name: \"node_exporter\"' >> /root/prometheus.yml",
+    "echo '    static_configs:' >> /root/prometheus.yml",
+    "echo '      - targets: [\"${digitalocean_droplet.nfs_server.ipv4_address_private}:9100\", \"${digitalocean_droplet.nfs_client.ipv4_address_private}:9100\"]' >> /root/prometheus.yml",
 
-      # Lancement Grafana en Docker
-      "docker run -d --name grafana -p 3000:3000 grafana/grafana"
-    ]
-  }
+    # Lancement Prometheus
+    "docker run -d --name prometheus --network monitoring-net -p 9090:9090 -v /root/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus",
+
+    # Lancement Grafana
+    "docker run -d --name grafana --network monitoring-net -p 3000:3000 grafana/grafana"
+  ]
+}
 }

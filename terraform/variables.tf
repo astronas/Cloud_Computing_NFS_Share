@@ -18,23 +18,19 @@ variable "private_key_path" {
   default     = "~/.ssh/id_rsa"
 }
 
-# Nom du VPC DigitalOcean existant à utiliser
-variable "vpc_name" {
-  description = "Nom du VPC DigitalOcean existant à utiliser pour les droplets"
+variable "vpc_id" {
+  description = "ID du VPC DigitalOcean existant"
   type        = string
-  default     = "nfs-vpc"
 }
 
-# Région du VPC et des droplets
 variable "region" {
-  description = "Région DigitalOcean pour le déploiement"
+  description = "Région DigitalOcean pour le déploiement (ex: fra1, nyc1)"
   type        = string
   default     = "fra1"
 }
 
-# Taille des droplets à déployer
 variable "droplet_size" {
-  description = "Taille des droplets :"
+  description = "Taille des droplets (ex: s-1vcpu-1gb)"
   type        = string
   default     = "s-1vcpu-1gb"
 }
