@@ -1,0 +1,22 @@
+# .gitignore
+
+# Terraform state
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Crash logs
+crash.log
+
+# Sensitive variable definitions
+terraform.tfvars
+
+# Terraform plan output
+*.tfplan
+
+# IDE files
+.vscode/
+.idea/
+
+# MacOS
+.DS_Store
