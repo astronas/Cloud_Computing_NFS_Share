@@ -126,22 +126,7 @@ resource "null_resource" "monitoring_setup" {
   provisioner "remote-exec" {
   inline = [
     # Installation Docker (idem)
-    "apt update && apt install -y apt-transport-https ca-certificates curl software-properties-common",
-    "sudo apt upgrade -y",
-    "sudo apt install ca-certificates curl",
-    "sudo install -m 0755 -d /etc/apt/keyrings",
-    "sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc",
-    "sudo apt update",
-    "sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin",
-    "sudo systemctl start docker",
-    "sudo systemctl enable docker",
-
-    # Lancement Prometheus
-    "docker run -p 9090:9090 prom/prometheus",
-
-    # Lancement Grafana
-    "docker run -d --name grafana -p 3000:3000 grafana/grafana"
-    
+    "apt update && apt install -y apt-transport-https ca-certificates curl software-properties-common"
   ]
 }
 }
