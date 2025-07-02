@@ -1,5 +1,3 @@
-# Cloud_Computing_NFS_Share
-
 # 🚀 Infrastructure NFS automatisée avec Terraform sur DigitalOcean
 
 Ce projet Terraform permet de déployer **automatiquement une infrastructure NFS** sur DigitalOcean :
