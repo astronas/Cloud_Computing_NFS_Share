@@ -48,6 +48,7 @@ resource "null_resource" "nfs_provisioner" {
       "systemctl restart nfs-server"
     ]
   }
+  
 }
 
 # Déploiement du client NFS
