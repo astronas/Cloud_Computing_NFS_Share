@@ -72,11 +72,13 @@ resource "null_resource" "nfs_client_setup" {
   }
 
   provisioner "remote-exec" {
-    inline = [
-      "apt update && apt install -y nfs-common",
-      "mkdir -p /mnt/nfs_test",
-      "mount -t nfs ${digitalocean_droplet.nfs_server.ipv4_address_private}:/srv/nfs_share /mnt/nfs_test",
-      "echo 'Hello depuis le client' > /mnt/nfs_test/hello_from_client.txt"
-    ]
-  }
+  inline = [
+    "apt update && apt install -y nfs-common",
+    "mkdir -p /mnt/nfs_test",
+    # Ajout au fstab pour montage persistant
+    "echo '${digitalocean_droplet.nfs_server.ipv4_address_private}:/srv/nfs_share /mnt/nfs_test nfs defaults 0 0' >> /etc/fstab",
+    "mount -a",
+    "echo 'Hello depuis le client (persistant)' > /mnt/nfs_test/hello_from_client.txt"
+  ]
+}
 }
