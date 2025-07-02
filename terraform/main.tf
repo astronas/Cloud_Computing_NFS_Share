@@ -125,8 +125,8 @@ resource "null_resource" "monitoring_setup" {
 
   provisioner "remote-exec" {
   inline = [
-    # Installation Docker (idem)
-    "apt update && apt install -y apt-transport-https ca-certificates curl software-properties-common"
+    # Installation Docker
+    "apt update"
   ]
 }
 }
