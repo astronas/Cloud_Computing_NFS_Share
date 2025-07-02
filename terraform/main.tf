@@ -43,6 +43,7 @@ resource "null_resource" "nfs_provisioner" {
       "mkdir -p /srv/nfs_share",
       "chmod 777 /srv/nfs_share",
       "echo '/srv/nfs_share *(rw,sync,no_subtree_check,no_root_squash)' >> /etc/exports",
+      "sudo ufw allow from any ip to any port nfs",
       "systemctl enable nfs-server",
       "systemctl restart nfs-server"
     ]
