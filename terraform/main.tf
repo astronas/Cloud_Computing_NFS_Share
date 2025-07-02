@@ -12,13 +12,25 @@ data "digitalocean_ssh_key" "default" {
   name = var.ssh_key_name
 }
 
+data "digitalocean_ssh_key" "secondary_1" {
+  name = var.ssh_key_name_secondary_1
+}
+
+data "digitalocean_ssh_key" "secondary_2" {
+  name = var.ssh_key_name_secondary_2
+}
+
 # Déploiement du serveur NFS
 resource "digitalocean_droplet" "nfs_server" {
   name       = "nfs-server"
   region     = var.region
   size       = var.droplet_size
   image      = "debian-12-x64"
-  ssh_keys   = [data.digitalocean_ssh_key.default.id]
+  ssh_keys = [
+    data.digitalocean_ssh_key.default.id,
+    data.digitalocean_ssh_key.secondary_1.id,
+    data.digitalocean_ssh_key.secondary_2.id
+  ]
   vpc_uuid   = data.digitalocean_vpc.existing_nfs_vpc.id
   tags       = ["nfs", "server"]
 }
@@ -53,7 +65,11 @@ resource "digitalocean_droplet" "nfs_client" {
   region     = var.region
   size       = var.droplet_size
   image      = "debian-12-x64"
-  ssh_keys   = [data.digitalocean_ssh_key.default.id]
+  ssh_keys = [
+    data.digitalocean_ssh_key.default.id,
+    data.digitalocean_ssh_key.secondary_1.id,
+    data.digitalocean_ssh_key.secondary_2.id
+  ]
   vpc_uuid   = data.digitalocean_vpc.existing_nfs_vpc.id
   tags       = ["nfs", "client"]
 }
@@ -87,7 +103,11 @@ resource "digitalocean_droplet" "monitoring" {
   region     = var.region
   size       = var.droplet_size
   image      = "debian-12-x64"
-  ssh_keys   = [data.digitalocean_ssh_key.default.id]
+  ssh_keys = [
+    data.digitalocean_ssh_key.default.id,
+    data.digitalocean_ssh_key.secondary_1.id,
+    data.digitalocean_ssh_key.secondary_2.id
+  ]
   vpc_uuid   = data.digitalocean_vpc.existing_nfs_vpc.id
   tags       = ["monitoring"]
 }
@@ -106,7 +126,31 @@ resource "null_resource" "monitoring_setup" {
   provisioner "remote-exec" {
   inline = [
     # Installation Docker (idem)
-    "apt update && apt install -y apt-transport-https ca-certificates curl software-properties-common"
+    "apt update && apt install -y apt-transport-https ca-certificates curl software-properties-common",
+    "sudo apt upgrade -y",
+    "sudo apt install ca-certificates curl",
+    "sudo install -m 0755 -d /etc/apt/keyrings",
+    "sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc",
+    "sudo apt update",
+    "sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin",
+    "sudo systemctl start docker",
+    "sudo systemctl enable docker",
+
+    # Création de prometheus.yml ligne par ligne
+    "echo 'global:' > /root/prometheus.yml",
+    "echo '  scrape_interval: 15s' >> /root/prometheus.yml",
+    "echo '' >> /root/prometheus.yml",
+    "echo 'scrape_configs:' >> /root/prometheus.yml",
+    "echo '  - job_name: \"node_exporter\"' >> /root/prometheus.yml",
+    "echo '    static_configs:' >> /root/prometheus.yml",
+    "echo '      - targets: [\"${digitalocean_droplet.nfs_server.ipv4_address_private}:9100\", \"${digitalocean_droplet.nfs_client.ipv4_address_private}:9100\"]' >> /root/prometheus.yml",
+
+    # Lancement Prometheus
+    "docker run -d --name prometheus -p 9090:9090 -v /root/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus",
+
+    # Lancement Grafana
+    "docker run -d --name grafana -p 3000:3000 grafana/grafana"
+    
   ]
 }
 }

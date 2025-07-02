@@ -11,6 +11,17 @@ variable "ssh_key_name" {
   type        = string
 }
 
+variable "ssh_key_name_secondary_1" {
+  description = "Nom de la deuxième clé SSH importée dans DigitalOcean"
+  type        = string
+}
+
+variable "ssh_key_name_secondary_2" {
+  description = "Nom de la troisième clé SSH importée dans DigitalOcean"
+  type        = string
+}
+
+
 # Chemin local vers la clé privée SSH correspondante à la clé publique DigitalOcean
 variable "private_key_path" {
   description = "Chemin vers la clé privée SSH utilisée pour la connexion SSH"
