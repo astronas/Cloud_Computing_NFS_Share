@@ -106,19 +106,7 @@ resource "null_resource" "monitoring_setup" {
   provisioner "remote-exec" {
   inline = [
     # Installation Docker (idem)
-    "apt update && apt install -y apt-transport-https ca-certificates curl software-properties-common",
-    "curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -",
-    "add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable\"",
-    "apt update && apt install -y docker-ce",
-    "systemctl enable docker --now",
-
-    "docker network create monitoring-net || true",
-
-    # Lancement Prometheus
-    "docker run -d --name prometheus --network monitoring-net -p 9090:9090 -v /root/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus",
-
-    # Lancement Grafana
-    "docker run -d --name grafana --network monitoring-net -p 3000:3000 grafana/grafana"
+    "apt update && apt install -y apt-transport-https ca-certificates curl software-properties-common"
   ]
 }
 }
