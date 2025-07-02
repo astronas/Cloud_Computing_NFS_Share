@@ -3,7 +3,7 @@ provider "digitalocean" {
 }
 
 resource "digitalocean_vpc" "nfs_vpc" {
-  name        = "nfs-vpc"
+  name        = "nfs-vpc2"
   region      = "fra1"
   ip_range    = "10.10.0.0/16"
   description = "VPC privé pour le partage NFS"
