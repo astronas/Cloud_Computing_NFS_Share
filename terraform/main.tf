@@ -114,15 +114,6 @@ resource "null_resource" "monitoring_setup" {
 
     "docker network create monitoring-net || true",
 
-    # Création de prometheus.yml ligne par ligne
-    "echo 'global:' > /root/prometheus.yml",
-    "echo '  scrape_interval: 15s' >> /root/prometheus.yml",
-    "echo '' >> /root/prometheus.yml",
-    "echo 'scrape_configs:' >> /root/prometheus.yml",
-    "echo '  - job_name: \"node_exporter\"' >> /root/prometheus.yml",
-    "echo '    static_configs:' >> /root/prometheus.yml",
-    "echo '      - targets: [\"${digitalocean_droplet.nfs_server.ipv4_address_private}:9100\", \"${digitalocean_droplet.nfs_client.ipv4_address_private}:9100\"]' >> /root/prometheus.yml",
-
     # Lancement Prometheus
     "docker run -d --name prometheus --network monitoring-net -p 9090:9090 -v /root/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus",
 
