@@ -1,8 +1,0 @@
-do_token         = "dop_v1_9b16cd807abb07e9655fe848f73ba7b5fc15919366b103dd662e112f43af0099"
-ssh_key_name     = "thibaut"
-ssh_key_name_secondary_1 = "sacha"
-ssh_key_name_secondary_2 = "clement"
-private_key_path = "~/.ssh/id_rsa"
-vpc_id          = "6d94fddf-909d-415e-9931-650a77238e44"
-region          = "fra1"
-droplet_size    = "s-1vcpu-1gb"
