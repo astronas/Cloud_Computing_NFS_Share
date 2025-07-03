@@ -51,7 +51,7 @@ resource "null_resource" "nfs_provisioner" {
       "apt update && apt install -y nfs-kernel-server",
       "mkdir -p /srv/nfs_share",
       "chmod 777 /srv/nfs_share",
-      "echo '/srv/nfs_share *(rw,sync,no_subtree_check,no_root_squash)' >> /etc/exports",
+      "echo '/srv/nfs_share *(rw,sync,no_subtree_check)' >> /etc/exports",
       "ufw allow from any to any port nfs",
       "systemctl enable nfs-server",
       "systemctl restart nfs-server"
