@@ -21,7 +21,6 @@ variable "ssh_key_name_secondary_2" {
   type        = string
 }
 
-
 # Chemin local vers la clé privée SSH correspondante à la clé publique DigitalOcean
 variable "private_key_path" {
   description = "Chemin vers la clé privée SSH utilisée pour la connexion SSH"
@@ -35,13 +34,13 @@ variable "vpc_id" {
 }
 
 variable "region" {
-  description = "Région DigitalOcean pour le déploiement (ex: fra1, nyc1)"
+  description = "Région DigitalOcean pour le déploiement"
   type        = string
   default     = "fra1"
 }
 
 variable "droplet_size" {
-  description = "Taille des droplets (ex: s-1vcpu-1gb)"
+  description = "Taille des droplets"
   type        = string
   default     = "s-1vcpu-1gb"
 }
